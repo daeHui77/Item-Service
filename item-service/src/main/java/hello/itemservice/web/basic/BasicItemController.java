@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
@@ -57,11 +58,25 @@ public class BasicItemController {
         return "basic/item";
     }
 
-    @PostMapping("/add")
+    //@PostMapping("/add")
     public String addItemV4(Item item){ //스트링 형태면 모델어트리뷰트의 생략을 알아볼 수 있음, 객체를 기억이 안남
 
         itemRepository.save(item);
         return "basic/item";
+    }
+
+    //@PostMapping("/add")
+    public String addItemV5(Item item) {
+        itemRepository.save(item);
+        return "redirect:/basic/items/" + item.getId();
+    }
+
+    @PostMapping("/add")
+    public String addItemV6(Item item, RedirectAttributes redirectAttributes) {
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId",savedItem.getId());
+        redirectAttributes.addAttribute("status",true);//클라이언트에 저장됨을 알려줌
+        return "redirect:/basic/items/" + item.getId();
     }
 
     @GetMapping("/{itemId}")//PathVariable의 itemId가 Mapping에 들어간다.
@@ -70,6 +85,23 @@ public class BasicItemController {
         model.addAttribute("item", item);
         return "basic/item";
     }
+
+    @GetMapping("{itemId}/edit")
+    public String editForm(@PathVariable Long itemId, Model model){
+        Item item = itemRepository.findById(itemId);
+        model.addAttribute("item",item);
+
+        return "basic/editForm";
+    }
+    @PostMapping("/{itemId}/edit")
+    public String update(@PathVariable Long itemId, @ModelAttribute Item item) {
+        itemRepository.update(itemId, item);
+
+        return "redirect:/basic/items/{itemId}";
+    }
+
+
+
     @PostConstruct//데스트데이터 미리 넣어줌 컴파일 단계에서 들어감
     public void init(){
         itemRepository.save(new Item("ItemA",10000,10));
